@@ -314,20 +314,28 @@
             msg.style.display = show ? '' : 'none';
         }
         function formatDateLabel(dateStr) {
-            // Parse ISO 8601 date string directly
             let dt = new Date(dateStr);
             if (isNaN(dt.getTime())) return 'Invalid Date';
             let now = new Date();
             let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             let eventDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
             let diffDays = Math.floor((today - eventDay) / (1000*60*60*24));
+            let timeStr = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
             let label = '';
-            if (diffDays === 0) label = 'Today';
-            else if (diffDays === 1) label = 'Yesterday';
-            else if (diffDays < 7) label = 'This Week';
-            else if (diffDays < 14) label = 'Last Week';
-            else label = dt.toLocaleDateString();
-            return `${label} ${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
+            if (diffDays === 0) {
+                label = `Today @ ${timeStr}`;
+            } else if (diffDays === 1) {
+                label = `Yesterday @ ${timeStr}`;
+            } else if (diffDays < 7) {
+                // Show weekday (short) and time
+                let weekday = dt.toLocaleDateString([], { weekday: 'short' });
+                label = `${weekday} @ ${timeStr}`;
+            } else {
+                // Show month (short), day, and time
+                let monthDay = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                label = `${monthDay} @ ${timeStr}`;
+            }
+            return label;
         }
         function fetchEvents() {
             fetch('/events').then(r => r.json()).then(data => {
