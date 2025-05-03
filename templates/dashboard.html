@@ -15,8 +15,8 @@
         body {
             min-height: 100vh;
             background: #000000;
-            color: #FFFFFF;
-            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            color: #E0E0E0;
+            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
@@ -35,7 +35,7 @@
             border-radius: 0;
             box-shadow: none;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             min-height: 0;
             flex: 1 1 auto;
             height: 100%;
@@ -71,9 +71,19 @@
             border-radius: 0;
         }
         th, td {
-            padding: 6px 6px;
+            padding: 2px 3px;
             text-align: left;
-            font-size: 0.95em;
+            font-size: 0.75em;
+            max-width: 110px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td.count-col {
+            text-align: right;
+        }
+        td.device-col, td.event-col {
+            max-width: 90px;
         }
         th {
             background: #000000 !important;
@@ -88,6 +98,7 @@
             top: 0;
             z-index: 10;
             text-align: left;
+            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
         }
         tr {
             border-bottom: 1px solid #333;
@@ -95,16 +106,21 @@
         tr:last-child {
             border-bottom: none;
         }
+        tr:hover {
+            background: #111;
+        }
         td {
-            color: #FFFFFF;
+            color: #E0E0E0;
             font-size: 0.95em;
+            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
         }
         .tailgate {
             color: #FF3333;
             font-weight: bold;
             background: #000000;
             border-radius: 4px;
-            padding: 4px 8px;
+            padding: 2px 6px;
+            cursor: help;
         }
         .no-tailgate {
             color: #5CE1E6;
@@ -286,7 +302,7 @@
             let tailgateCount = 0;
             for (let e of events) {
                 if (e.type === 'camera' && e.event && e.event.toLowerCase().includes('linecross')) lineCrossCount++;
-                if (e.verdict === 'TAILGATE') tailgateCount++;
+                if (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') tailgateCount++;
             }
             document.getElementById('gauge-linecross-num').textContent = lineCrossCount;
             document.getElementById('gauge-tailgate-num').textContent = tailgateCount;
@@ -357,16 +373,26 @@
                 if (eventFilter === 'linecross') {
                     filtered = events.filter(e => e.type === 'camera' && e.event && e.event.toLowerCase().includes('linecross'));
                 } else if (eventFilter === 'tailgate') {
-                    filtered = events.filter(e => e.verdict === 'TAILGATE');
+                    filtered = events.filter(e => e.verdict && e.verdict.toUpperCase() === 'TAILGATING');
                 }
                 for (let e of filtered) {
                     let row = document.createElement('tr');
                     let timeCell = formatDateLabel(e.time);
+                    // Clean up count: extract leading number
+                    let countVal = '';
+                    if (e.count) {
+                        let match = e.count.match(/(\d+)/);
+                        countVal = match ? match[1] : e.count;
+                    }
+                    // Clean up event: add space in 'TailgateDetected'
+                    let eventVal = e.event ? e.event.replace(/([a-z])([A-Z])/g, '$1 $2') : '';
+                    let countCell = countVal ? `${countVal} <span style='font-size:1em;' title='Person'>👤</span>` : '';
                     if (e.type === 'access') {
-                        row.innerHTML = `<td>${timeCell}</td><td>Access</td><td>${e.portal}</td><td>${e.desc}</td><td></td><td></td><td></td>`;
+                        row.innerHTML = `<td>${timeCell}</td><td>Access</td><td class='device-col' title='${e.portal}'>${e.portal}</td><td class='event-col' title='${e.desc}'>${e.desc}</td><td class='count-col'></td><td></td><td></td>`;
                     } else {
-                        let verdictClass = e.verdict === 'TAILGATE' ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
-                        row.innerHTML = `<td>${timeCell}</td><td>Camera</td><td>${e.camera}</td><td>${e.event}</td><td>${e.count}</td><td class='${verdictClass}'>${e.verdict}</td><td></td>`;
+                        let verdictClass = (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
+                        let verdictCell = (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') ? `<td class='${verdictClass}' title='Multiple people entered on a single access event'>${e.verdict}</td>` : `<td class='${verdictClass}'>${e.verdict}</td>`;
+                        row.innerHTML = `<td>${timeCell}</td><td>Camera</td><td class='device-col' title='${e.camera}'>${e.camera}</td><td class='event-col' title='${eventVal}'>${eventVal}</td><td class='count-col'>${countCell}</td>${verdictCell}<td></td>`;
                     }
                     tbody.appendChild(row);
                 }
@@ -456,6 +482,10 @@
     </div>
     <div id="main-content">
       <div class="container">
+        <div style="flex: 1 1 60%; max-width: 60%; border-right: 1.5px solid #222; margin-right: 18px;">
+          <!-- Video or main content goes here -->
+        </div>
+        <div style="flex: 0 0 40%; max-width: 40%; min-width: 320px; display: flex; flex-direction: column;">
         <div class="gauges-sticky">
           <div id="gauges-row">
             <div class="gauge-card people">
@@ -485,6 +515,7 @@
             <tbody id="event-tbody">
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>
