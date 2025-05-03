@@ -128,7 +128,7 @@ def camera():
     # Always log the event for dashboard visibility
     log_event({
         'type': 'camera',
-        'time': now_local.strftime('%Y-%m-%d %H:%M:%S %Z'),
+        'time': now_local.isoformat(),
         'camera': data.get('CameraName', '<unknown>'),
         'event': data.get('EventName', '<unnamed>'),
         'count': data.get('EventCaption', ''),
@@ -157,7 +157,7 @@ def camera():
         # Update the most recent camera event in the log with the correct verdict
         with EVENT_LOCK:
             for event in EVENT_LOG:
-                if event.get('type') == 'camera' and event.get('time') == now_local.strftime('%Y-%m-%d %H:%M:%S %Z') and event.get('event') == data.get('EventName', '<unnamed>'):
+                if event.get('type') == 'camera' and event.get('time') == now_local.isoformat() and event.get('event') == data.get('EventName', '<unnamed>'):
                     event['verdict'] = verdict
                     break
     return jsonify(response)
@@ -188,7 +188,7 @@ def test_access():
     now_local = datetime.now().astimezone()
     log_event({
         'type': 'access',
-        'time': now_local.strftime('%Y-%m-%d %H:%M:%S %Z'),
+        'time': now_local.isoformat(),
         'portal': 'Test Portal',
         'desc': desc
     })
@@ -339,7 +339,7 @@ def start_netbox_thread():
                 print(f"[{now_local:%H:%M:%S %Z}] ACCESS: {portal} → {desc}")
                 log_event({
                     'type': 'access',
-                    'time': now_local.strftime('%Y-%m-%d %H:%M:%S %Z'),
+                    'time': now_local.isoformat(),
                     'portal': portal,
                     'desc': desc
                 })

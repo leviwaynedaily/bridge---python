@@ -314,10 +314,9 @@
             msg.style.display = show ? '' : 'none';
         }
         function formatDateLabel(dateStr) {
-            // dateStr: '2025-05-03 10:22:30 PDT' or similar
-            // Remove timezone if present
-            let dateNoTZ = dateStr.replace(/ [A-Z]{2,4}$/, '');
-            let dt = new Date(dateNoTZ.replace(/-/g, '/'));
+            // Parse ISO 8601 date string directly
+            let dt = new Date(dateStr);
+            if (isNaN(dt.getTime())) return 'Invalid Date';
             let now = new Date();
             let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             let eventDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
