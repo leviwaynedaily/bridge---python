@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tailgating Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&family=Open+Sans:wght@600&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            background: #000000;
+            color: #FFFFFF;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #main-content {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 32px 24px;
+            background: #232323;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5em;
+            letter-spacing: 0.25em;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .event-log {
+            margin-top: 1.5em;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 60vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            background: #1B1B1B;
+            position: relative;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #1B1B1B;
+            border-radius: 8px;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+        }
+        th {
+            background: #232323;
+            color: #5CE1E6;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-bottom: 2px solid #5CE1E6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tr {
+            border-bottom: 1px solid #333;
+        }
+        tr:last-child {
+            border-bottom: none;
+        }
+        td {
+            color: #FFFFFF;
+            font-size: 1em;
+        }
+        .tailgate {
+            color: #FF3333;
+            font-weight: bold;
+            background: #232323;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+        .no-tailgate {
+            color: #5CE1E6;
+            font-weight: bold;
+            background: #232323;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+        .ignored {
+            color: #888;
+            font-style: italic;
+        }
+        .gauges-sticky {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #232323;
+            padding: 16px 12px 8px 12px;
+        }
+        #gauges-row {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 2em;
+            flex-wrap: wrap;
+            padding: 0 4px;
+        }
+        .gauge-card {
+            flex: 1 1 220px;
+            min-width: 180px;
+            background: #1B1B1B;
+            border-radius: 18px;
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 2px solid #232323;
+            transition: border 0.2s;
+            margin-bottom: 16px;
+            margin-left: 2px;
+            margin-right: 2px;
+        }
+        .gauge-card.people {
+            cursor: default;
+            border: 2px solid #5CE1E6;
+        }
+        .gauge-card.people .gauge-label {
+            color: #5CE1E6;
+        }
+        .gauge-card.people .gauge-num {
+            color: #fff;
+        }
+        .gauge-label {
+            font-size: 1.1em;
+            color: #5CE1E6;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+        .gauge-num {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        .gauge-card .gauge-num.red {
+            color: #FF3333;
+        }
+        .gauge-card .gauge-num.white {
+            color: #fff;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 4px; }
+            table, th, td { font-size: 0.95em; }
+            .gauges-sticky { padding: 12px 2px 6px 2px; }
+            #gauges-row {
+                flex-direction: column;
+                gap: 12px;
+                padding: 0 2px;
+            }
+            .gauge-card {
+                min-width: 0;
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+            .event-log {
+                margin-top: 1em;
+                max-height: 45vh;
+                padding-left: 2px;
+                padding-right: 2px;
+            }
+        }
+        /* Settings Modal Customizations */
+        #settings-modal h2 {
+            color: #fff !important;
+            text-transform: uppercase;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+        }
+        #settings-modal label {
+            color: #fff;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            text-transform: none;
+        }
+        #settings-modal input[type="text"],
+        #settings-modal input[type="password"],
+        #settings-modal input[type="number"] {
+            background: #1B1B1B;
+            color: #5CE1E6;
+            border: 1px solid #5CE1E6;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 1em;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+        }
+        #settings-modal button,
+        #settings-modal button[type="button"],
+        #settings-modal button[type="submit"] {
+            background: transparent !important;
+            color: #5CE1E6 !important;
+            border: 2px solid #5CE1E6 !important;
+            border-radius: 4px;
+            padding: 8px 18px;
+            font-weight: bold;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
+            font-size: 1em;
+            margin-bottom: 8px;
+            margin-right: 8px;
+            transition: background 0.2s, color 0.2s;
+            box-shadow: none;
+            outline: none;
+            cursor: pointer;
+        }
+        #settings-modal button:hover,
+        #settings-modal button:focus {
+            background: #5CE1E6 !important;
+            color: #1B1B1B !important;
+        }
+        #settings-modal #close-settings {
+            color: #fff !important;
+            border: none !important;
+            background: none !important;
+            font-size: 1.5em;
+            margin: 0;
+            padding: 0;
+        }
+        #settings-modal #close-settings:hover {
+            color: #5CE1E6 !important;
+        }
+        #settings-modal #window-status-modal,
+        #settings-modal #netbox-test-status-modal {
+            color: #5CE1E6 !important;
+        }
+        #settings-modal #test-status-modal {
+            color: #5CE1E6 !important;
+        }
+    </style>
+    <script>
+        let eventFilter = null; // 'linecross' | 'tailgate' | null
+        function renderGauges(events, peopleCount) {
+            let lineCrossCount = 0;
+            let tailgateCount = 0;
+            for (let e of events) {
+                if (e.type === 'camera' && e.event && e.event.toLowerCase().includes('linecross')) lineCrossCount++;
+                if (e.verdict === 'TAILGATE') tailgateCount++;
+            }
+            document.getElementById('gauge-linecross-num').textContent = lineCrossCount;
+            document.getElementById('gauge-tailgate-num').textContent = tailgateCount;
+            document.getElementById('gauge-people-num').textContent = peopleCount;
+            // Tailgating gauge color logic
+            let tailgateNum = document.getElementById('gauge-tailgate-num');
+            if (tailgateCount > 0) {
+                tailgateNum.style.color = '#FF3333';
+            } else {
+                tailgateNum.style.color = '#fff';
+            }
+        }
+        function showReconnectMsg(show) {
+            let msg = document.getElementById('reconnect-msg');
+            if (!msg) {
+                msg = document.createElement('div');
+                msg.id = 'reconnect-msg';
+                msg.style = 'color:#FF3333; background:#232323; text-align:center; padding:8px 0; font-size:1.1em; font-family:inherit; border-radius:8px; margin-bottom:8px;';
+                let container = document.querySelector('.event-log');
+                if (container && container.parentNode) {
+                    container.parentNode.insertBefore(msg, container);
+                }
+            }
+            msg.textContent = show ? 'Reconnecting to server...' : '';
+            msg.style.display = show ? '' : 'none';
+        }
+        function fetchEvents() {
+            fetch('/events').then(r => r.json()).then(data => {
+                showReconnectMsg(false);
+                let events = data.events || [];
+                let peopleCount = data.people_count || 0;
+                let windowVal = data.window || 4;
+                if (document.getElementById('window-input')) {
+                    document.getElementById('window-input').value = windowVal;
+                }
+                if (document.getElementById('window-input-modal')) {
+                    document.getElementById('window-input-modal').value = windowVal;
+                }
+                renderGauges(events, peopleCount);
+                // Render events (with filter)
+                let tbody = document.getElementById('event-tbody');
+                tbody.innerHTML = '';
+                let filtered = events;
+                if (eventFilter === 'linecross') {
+                    filtered = events.filter(e => e.type === 'camera' && e.event && e.event.toLowerCase().includes('linecross'));
+                } else if (eventFilter === 'tailgate') {
+                    filtered = events.filter(e => e.verdict === 'TAILGATE');
+                }
+                for (let e of filtered) {
+                    let row = document.createElement('tr');
+                    if (e.type === 'access') {
+                        row.innerHTML = `<td>${e.time}</td><td>Access</td><td>${e.portal}</td><td>${e.desc}</td><td></td><td></td><td></td>`;
+                    } else {
+                        let verdictClass = e.verdict === 'TAILGATE' ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
+                        row.innerHTML = `<td>${e.time}</td><td>Camera</td><td>${e.camera}</td><td>${e.event}</td><td>${e.count}</td><td class='${verdictClass}'>${e.verdict}</td><td></td>`;
+                    }
+                    tbody.appendChild(row);
+                }
+            }).catch(() => {
+                showReconnectMsg(true);
+            });
+        }
+        setInterval(fetchEvents, 2000);
+        window.onload = function() {
+            fetchEvents();
+            // Gauge click handlers
+            document.getElementById('gauge-linecross').onclick = function() {
+                if (eventFilter === 'linecross') {
+                    eventFilter = null;
+                    this.style.border = '2px solid #232323';
+                } else {
+                    eventFilter = 'linecross';
+                    this.style.border = '2px solid #5CE1E6';
+                    document.getElementById('gauge-tailgate').style.border = '2px solid #232323';
+                }
+                fetchEvents();
+            };
+            document.getElementById('gauge-tailgate').onclick = function() {
+                if (eventFilter === 'tailgate') {
+                    eventFilter = null;
+                    this.style.border = '2px solid #232323';
+                } else {
+                    eventFilter = 'tailgate';
+                    this.style.border = '2px solid #FF3333';
+                    document.getElementById('gauge-linecross').style.border = '2px solid #232323';
+                }
+                fetchEvents();
+            };
+        };
+    </script>
+</head>
+<body>
+    <!-- Hamburger Icon -->
+    <button id="sidebar-hamburger" style="position: absolute; top: 24px; left: 36px; background: none; border: none; cursor: pointer; font-size: 2.2em; color: #5CE1E6; z-index: 101;">
+        <span title="Menu">&#9776;</span>
+    </button>
+    <!-- Sidebar -->
+    <div id="sidebar-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:100;"></div>
+    <div id="sidebar" style="display:none; position:fixed; top:0; left:0; height:100vh; width:340px; max-width:90vw; background:#232323; color:#fff; z-index:102; box-shadow:2px 0 24px rgba(0,0,0,0.4); padding:0; transition: transform 0.2s;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:24px 24px 0 24px;">
+            <span style="font-size:1.5em; font-family:'Montserrat','Open Sans',Arial,sans-serif; letter-spacing:0.08em; text-transform:uppercase;">Settings</span>
+            <button id="sidebar-close" style="background:none; border:none; color:#5CE1E6; font-size:2em; cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:24px;">
+            <div id="window-bar-sidebar" style="margin-bottom: 1.5em; font-size: 1.2em;">
+                <label style="display:block; margin-bottom:8px;">Tailgate Detection Window (seconds):</label>
+                <input type="number" id="window-input-sidebar" min="1" max="60" style="width:60px;">
+                <button id="window-save-sidebar">Save</button>
+                <span id="window-status-sidebar" style="margin-left:1em;"></span>
+            </div>
+            <div id="netbox-config-sidebar" style="margin-bottom: 1.5em; font-size: 1.2em;">
+                <form id="netbox-edit-form-sidebar" style="display:block;">
+                    <label style="display:block; margin-bottom:8px;">NetBox URL:</label>
+                    <input type="text" id="netbox-url-edit-sidebar" style="width:100%; margin-bottom:12px;">
+                    <label style="display:block; margin-bottom:8px;">User:</label>
+                    <input type="text" id="netbox-user-edit-sidebar" style="width:100%; margin-bottom:12px;">
+                    <label style="display:block; margin-bottom:8px;">Pass:</label>
+                    <input type="password" id="netbox-pass-edit-sidebar" style="width:100%; margin-bottom:12px;">
+                    <div style="margin-bottom:12px;">
+                        <button type="button" id="test-netbox-btn-sidebar">Test Connection</button>
+                        <button type="submit">Save</button>
+                        <span id="netbox-test-status-sidebar" style="margin-left:1em;"></span>
+                    </div>
+                </form>
+            </div>
+            <div id="test-buttons-bar-sidebar" style="margin-bottom: 1.5em; font-size: 1.2em; display:flex; flex-direction:column; gap:10px;">
+                <button id="test-unlock-btn-sidebar">Test Door Unlock</button>
+                <button id="test-lock-btn-sidebar">Test Door Lock</button>
+                <button id="test-linecross-btn-sidebar">Test Line Crossing</button>
+                <button id="test-tailgate-btn-sidebar">Test Tailgating</button>
+                <span id="test-status-sidebar" style="margin-left:1em;"></span>
+            </div>
+            <div style="flex:1 1 auto;"></div>
+            <div id="restart-bar-sidebar" style="margin-top:32px; display:flex; flex-direction:column; align-items:center;">
+                <button id="restart-server-btn-sidebar" style="border:2px solid #5CE1E6; color:#5CE1E6; background:transparent; font-family:'Montserrat','Open Sans',Arial,sans-serif; font-size:1.1em; font-weight:bold; border-radius:4px; padding:10px 24px; margin-top:12px; width:90%; transition:background 0.2s, color 0.2s;">Restart Server</button>
+                <span id="restart-status-sidebar" style="margin-top:8px; color:#5CE1E6;"></span>
+            </div>
+        </div>
+    </div>
+    <div id="main-content">
+      <div class="container">
+        <h1>TAILGATING</h1>
+        <div class="gauges-sticky">
+          <div id="gauges-row">
+            <div class="gauge-card people">
+              <span class="gauge-label">CURRENT PEOPLE</span>
+              <span id="gauge-people-num" class="gauge-num">0</span>
+            </div>
+            <div id="gauge-linecross" class="gauge-card">
+              <span class="gauge-label">LINE CROSSINGS</span>
+              <span id="gauge-linecross-num" class="gauge-num white">0</span>
+            </div>
+            <div id="gauge-tailgate" class="gauge-card">
+              <span class="gauge-label">TAILGATING HISTORY</span>
+              <span id="gauge-tailgate-num" class="gauge-num red">0</span>
+            </div>
+          </div>
+        </div>
+        <div id="window-bar" style="display:none;"></div>
+        <div id="netbox-config-display" style="display:none;"></div>
+        <div id="test-buttons-bar" style="display:none;"></div>
+        <div class="event-log">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th><th>Type</th><th>Portal/Camera</th><th>Event</th><th>Count</th><th>Verdict</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="event-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+        // Sidebar logic
+        function openSidebar() {
+            document.getElementById('sidebar').style.display = '';
+            document.getElementById('sidebar-overlay').style.display = '';
+            // Sync sidebar fields with current values
+            fetch('/events').then(r => r.json()).then(data => {
+                let windowVal = data.window || 4;
+                document.getElementById('window-input-sidebar').value = windowVal;
+            });
+            fetch('/get_netbox_config').then(r => r.json()).then(cfg => {
+                document.getElementById('netbox-url-edit-sidebar').value = cfg.url;
+                document.getElementById('netbox-user-edit-sidebar').value = cfg.username;
+                document.getElementById('netbox-pass-edit-sidebar').value = '';
+                document.getElementById('netbox-test-status-sidebar').textContent = '';
+            });
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('sidebar-overlay').style.display = 'none';
+        }
+        document.getElementById('sidebar-hamburger').onclick = openSidebar;
+        document.getElementById('sidebar-close').onclick = closeSidebar;
+        document.getElementById('sidebar-overlay').onclick = closeSidebar;
+        // Sidebar window save
+        document.getElementById('window-save-sidebar').onclick = function() {
+            let newWindow = parseInt(document.getElementById('window-input-sidebar').value);
+            fetch('/set_window', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ window: newWindow })
+            }).then(r => r.json()).then(data => {
+                let status = document.getElementById('window-status-sidebar');
+                if (data.status === 'ok') {
+                    status.textContent = 'Saved!';
+                    setTimeout(() => status.textContent = '', 2000);
+                } else {
+                    status.textContent = data.message || 'Error';
+                }
+            });
+        };
+        // Sidebar NetBox test
+        document.getElementById('test-netbox-btn-sidebar').onclick = function() {
+            let url = document.getElementById('netbox-url-edit-sidebar').value;
+            let username = document.getElementById('netbox-user-edit-sidebar').value;
+            let password = document.getElementById('netbox-pass-edit-sidebar').value;
+            document.getElementById('netbox-test-status-sidebar').textContent = 'Testing...';
+            fetch('/test_netbox', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, username, password })
+            }).then(r => r.json()).then(data => {
+                if (data.status === 'ok') {
+                    document.getElementById('netbox-test-status-sidebar').textContent = 'Success!';
+                    document.getElementById('netbox-test-status-sidebar').style.color = '#5CE1E6';
+                } else {
+                    document.getElementById('netbox-test-status-sidebar').textContent = data.message || 'Error';
+                    document.getElementById('netbox-test-status-sidebar').style.color = '#FF3333';
+                }
+            }).catch(() => {
+                document.getElementById('netbox-test-status-sidebar').textContent = 'Error';
+                document.getElementById('netbox-test-status-sidebar').style.color = '#FF3333';
+            });
+        };
+        // Sidebar NetBox save
+        document.getElementById('netbox-edit-form-sidebar').onsubmit = function(e) {
+            e.preventDefault();
+            let url = document.getElementById('netbox-url-edit-sidebar').value;
+            let username = document.getElementById('netbox-user-edit-sidebar').value;
+            let password = document.getElementById('netbox-pass-edit-sidebar').value;
+            fetch('/set_netbox_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, username, password })
+            }).then(r => r.json()).then(data => {
+                closeSidebar();
+            });
+        };
+        // Sidebar test buttons
+        function showTestStatusSidebar(msg, color) {
+            let el = document.getElementById('test-status-sidebar');
+            el.textContent = msg;
+            el.style.color = color;
+            setTimeout(() => { el.textContent = ''; }, 2000);
+        }
+        document.getElementById('test-unlock-btn-sidebar').onclick = function() {
+            fetch('/test_access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ desc: 'Door Unlock' })
+            }).then(r => r.json()).then(data => {
+                showTestStatusSidebar('Door Unlock sent!', '#5CE1E6');
+                fetchEvents();
+            });
+        };
+        document.getElementById('test-lock-btn-sidebar').onclick = function() {
+            fetch('/test_access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ desc: 'Door Lock' })
+            }).then(r => r.json()).then(data => {
+                showTestStatusSidebar('Door Lock sent!', '#5CE1E6');
+                fetchEvents();
+            });
+        };
+        document.getElementById('test-linecross-btn-sidebar').onclick = function() {
+            fetch('/camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ EventType: 'LineCrossing', CameraName: 'TestCam', EventName: 'LineCrossed', EventCaption: '1 person' })
+            }).then(r => r.json()).then(data => {
+                showTestStatusSidebar('Line Crossing sent!', '#5CE1E6');
+                fetchEvents();
+            });
+        };
+        document.getElementById('test-tailgate-btn-sidebar').onclick = function() {
+            fetch('/camera', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ EventType: 'Tailgating', CameraName: 'TestCam', EventName: 'TailgateDetected', EventCaption: '2 persons', EventDescription: 'Two people passed within 10s' })
+            }).then(r => r.json()).then(data => {
+                showTestStatusSidebar('Tailgating sent!', '#5CE1E6');
+                fetchEvents();
+            });
+        };
+        // Sidebar restart server
+        document.getElementById('restart-server-btn-sidebar').onclick = function() {
+            if (!confirm('Are you sure you want to restart the server?')) return;
+            document.getElementById('restart-status-sidebar').textContent = 'Restarting...';
+            fetch('/restart', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('restart-status-sidebar').textContent = data.status === 'ok' ? 'Restarted!' : (data.message || 'Error');
+                })
+                .catch(() => {
+                    document.getElementById('restart-status-sidebar').textContent = 'Error';
+                });
+        };
+    </script>
+</body>
+</html>
