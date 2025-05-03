@@ -9,6 +9,8 @@
             height: 100%;
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
+            overflow-y: hidden;
         }
         body {
             min-height: 100vh;
@@ -17,66 +19,75 @@
             font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
         }
         #main-content {
-            flex: 1 1 auto;
+            max-width: 100%;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             min-height: 0;
         }
         .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 32px 24px;
-            background: #232323;
-            border-radius: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+            max-width: 100%;
+            margin: 0;
+            padding: 18px 18px 0 18px;
+            background: #000;
+            border-radius: 0;
+            box-shadow: none;
             display: flex;
             flex-direction: column;
             min-height: 0;
+            flex: 1 1 auto;
+            height: 100%;
+            overflow: hidden;
         }
         h1 {
-            font-size: 2.5rem;
+            font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 0.5em;
-            letter-spacing: 0.25em;
+            letter-spacing: 0.18em;
             color: #FFFFFF;
             text-transform: uppercase;
-            text-align: center;
+            text-align: left;
+            margin-top: 0.5em;
         }
         .event-log {
-            margin-top: 1.5em;
+            margin-top: 0.5em;
             flex: 1 1 auto;
             min-height: 0;
-            max-height: 60vh;
+            height: 100%;
             overflow-y: auto;
-            border-radius: 8px;
-            background: #1B1B1B;
+            border-radius: 0;
+            background: #000000;
             position: relative;
-            padding-left: 4px;
-            padding-right: 4px;
+            padding-left: 0;
+            padding-right: 0;
+            z-index: 1;
         }
         table {
             border-collapse: collapse;
             width: 100%;
-            background: #1B1B1B;
-            border-radius: 8px;
+            background: #000000;
+            border-radius: 0;
         }
         th, td {
-            padding: 12px 10px;
+            padding: 6px 6px;
             text-align: left;
+            font-size: 0.95em;
         }
         th {
-            background: #232323;
+            background: #000000 !important;
+            background-clip: padding-box;
+            opacity: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.12);
             color: #5CE1E6;
-            font-size: 1.1em;
+            font-size: 0.98em;
             font-weight: 600;
             border-bottom: 2px solid #5CE1E6;
             position: sticky;
             top: 0;
             z-index: 10;
+            text-align: left;
         }
         tr {
             border-bottom: 1px solid #333;
@@ -86,19 +97,19 @@
         }
         td {
             color: #FFFFFF;
-            font-size: 1em;
+            font-size: 0.95em;
         }
         .tailgate {
             color: #FF3333;
             font-weight: bold;
-            background: #232323;
+            background: #000000;
             border-radius: 4px;
             padding: 4px 8px;
         }
         .no-tailgate {
             color: #5CE1E6;
             font-weight: bold;
-            background: #232323;
+            background: #000000;
             border-radius: 4px;
             padding: 4px 8px;
         }
@@ -110,32 +121,36 @@
             position: sticky;
             top: 0;
             z-index: 5;
-            background: #232323;
-            padding: 16px 12px 8px 12px;
+            background: #000000;
+            padding: 6px 2px 4px 2px;
         }
         #gauges-row {
             display: flex;
-            gap: 24px;
-            margin-bottom: 2em;
+            gap: 10px;
+            margin-bottom: 0.5em;
             flex-wrap: wrap;
-            padding: 0 4px;
+            padding: 0 2px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
         .gauge-card {
-            flex: 1 1 220px;
-            min-width: 180px;
-            background: #1B1B1B;
-            border-radius: 18px;
-            padding: 24px 0;
+            flex: 1 1 100px;
+            min-width: 80px;
+            background: #000000;
+            border-radius: 8px;
+            padding: 6px 6px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             border: 2px solid #232323;
             transition: border 0.2s;
-            margin-bottom: 16px;
-            margin-left: 2px;
-            margin-right: 2px;
+            margin-bottom: 6px;
+            margin-left: 1px;
+            margin-right: 1px;
+            box-sizing: border-box;
         }
         .gauge-card.people {
             cursor: default;
@@ -148,14 +163,16 @@
             color: #fff;
         }
         .gauge-label {
-            font-size: 1.1em;
+            font-size: 0.85em;
             color: #5CE1E6;
-            margin-bottom: 10px;
-            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+            letter-spacing: 0.02em;
+            text-align: left;
         }
         .gauge-num {
-            font-size: 2.5em;
+            font-size: 2.2em;
             font-weight: bold;
+            text-align: left;
         }
         .gauge-card .gauge-num.red {
             color: #FF3333;
@@ -164,25 +181,36 @@
             color: #fff;
         }
         @media (max-width: 700px) {
-            .container { padding: 4px; }
-            table, th, td { font-size: 0.95em; }
-            .gauges-sticky { padding: 12px 2px 6px 2px; }
+            .container { padding: 10px; overflow-x: hidden; height: 100%; }
+            table, th, td { font-size: 0.90em; }
+            .gauges-sticky { padding: 2px 0 1px 0; }
             #gauges-row {
                 flex-direction: column;
-                gap: 12px;
-                padding: 0 2px;
+                gap: 4px;
+                padding: 0 0;
+                width: 100%;
+                overflow-x: hidden;
             }
             .gauge-card {
                 min-width: 0;
                 width: 100%;
                 margin-left: 0;
                 margin-right: 0;
+                padding: 2px 8px 6px 8px;
+                box-sizing: border-box;
+            }
+            .gauge-label {
+                font-size: 0.7em;
+                margin-bottom: 0;
+            }
+            .gauge-num {
+                font-size: 1.6em;
             }
             .event-log {
-                margin-top: 1em;
-                max-height: 45vh;
-                padding-left: 2px;
-                padding-right: 2px;
+                margin-top: 0.3em;
+                height: 100%;
+                padding-left: 0;
+                padding-right: 0;
             }
         }
         /* Settings Modal Customizations */
@@ -201,7 +229,7 @@
         #settings-modal input[type="text"],
         #settings-modal input[type="password"],
         #settings-modal input[type="number"] {
-            background: #1B1B1B;
+            background: #000000;
             color: #5CE1E6;
             border: 1px solid #5CE1E6;
             border-radius: 4px;
@@ -285,6 +313,23 @@
             msg.textContent = show ? 'Reconnecting to server...' : '';
             msg.style.display = show ? '' : 'none';
         }
+        function formatDateLabel(dateStr) {
+            // dateStr: '2025-05-03 10:22:30 PDT' or similar
+            // Remove timezone if present
+            let dateNoTZ = dateStr.replace(/ [A-Z]{2,4}$/, '');
+            let dt = new Date(dateNoTZ.replace(/-/g, '/'));
+            let now = new Date();
+            let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            let eventDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+            let diffDays = Math.floor((today - eventDay) / (1000*60*60*24));
+            let label = '';
+            if (diffDays === 0) label = 'Today';
+            else if (diffDays === 1) label = 'Yesterday';
+            else if (diffDays < 7) label = 'This Week';
+            else if (diffDays < 14) label = 'Last Week';
+            else label = dt.toLocaleDateString();
+            return `${label} ${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
+        }
         function fetchEvents() {
             fetch('/events').then(r => r.json()).then(data => {
                 showReconnectMsg(false);
@@ -309,11 +354,12 @@
                 }
                 for (let e of filtered) {
                     let row = document.createElement('tr');
+                    let timeCell = formatDateLabel(e.time);
                     if (e.type === 'access') {
-                        row.innerHTML = `<td>${e.time}</td><td>Access</td><td>${e.portal}</td><td>${e.desc}</td><td></td><td></td><td></td>`;
+                        row.innerHTML = `<td>${timeCell}</td><td>Access</td><td>${e.portal}</td><td>${e.desc}</td><td></td><td></td><td></td>`;
                     } else {
                         let verdictClass = e.verdict === 'TAILGATE' ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
-                        row.innerHTML = `<td>${e.time}</td><td>Camera</td><td>${e.camera}</td><td>${e.event}</td><td>${e.count}</td><td class='${verdictClass}'>${e.verdict}</td><td></td>`;
+                        row.innerHTML = `<td>${timeCell}</td><td>Camera</td><td>${e.camera}</td><td>${e.event}</td><td>${e.count}</td><td class='${verdictClass}'>${e.verdict}</td><td></td>`;
                     }
                     tbody.appendChild(row);
                 }
@@ -351,10 +397,13 @@
     </script>
 </head>
 <body>
-    <!-- Hamburger Icon -->
-    <button id="sidebar-hamburger" style="position: absolute; top: 24px; left: 36px; background: none; border: none; cursor: pointer; font-size: 2.2em; color: #5CE1E6; z-index: 101;">
-        <span title="Menu">&#9776;</span>
-    </button>
+    <!-- Hamburger and Title Row -->
+    <div style="display: flex; align-items: center; margin-bottom: 0.2em; padding-top: 8px;">
+        <button id="sidebar-hamburger" style="background: none; border: none; cursor: pointer; font-size: 1.2em; color: #5CE1E6; margin-right: 8px; padding: 0 2px; line-height: 1;">
+            <span title="Menu">&#9776;</span>
+        </button>
+        <h1 style="margin: 0; padding: 0;">TAILGATING</h1>
+    </div>
     <!-- Sidebar -->
     <div id="sidebar-overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:100;"></div>
     <div id="sidebar" style="display:none; position:fixed; top:0; left:0; height:100vh; width:340px; max-width:90vw; background:#232323; color:#fff; z-index:102; box-shadow:2px 0 24px rgba(0,0,0,0.4); padding:0; transition: transform 0.2s;">
@@ -400,7 +449,6 @@
     </div>
     <div id="main-content">
       <div class="container">
-        <h1>TAILGATING</h1>
         <div class="gauges-sticky">
           <div id="gauges-row">
             <div class="gauge-card people">
@@ -424,7 +472,7 @@
           <table>
             <thead>
               <tr>
-                <th>Time</th><th>Type</th><th>Portal/Camera</th><th>Event</th><th>Count</th><th>Verdict</th><th></th>
+                <th>Time</th><th>Type</th><th>Device</th><th>Event</th><th>Count</th><th>Verdict</th><th></th>
               </tr>
             </thead>
             <tbody id="event-tbody">

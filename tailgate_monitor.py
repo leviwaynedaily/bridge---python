@@ -8,6 +8,19 @@ import argparse
 from collections import deque
 import os
 import sys
+import sqlite3
+
+# --- Auto-install required packages if missing ---
+REQUIRED = ['flask', 'requests', 'jinja2']
+try:
+    import flask, requests, jinja2
+except ImportError:
+    import subprocess
+    print('Missing dependencies. Installing...')
+    subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + REQUIRED)
+    print('Dependencies installed. Restarting...')
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+# --- End auto-installer ---
 
 app = Flask(__name__)
 UNLOCK_EVENTS = []
@@ -16,6 +29,26 @@ WINDOW = 10  # seconds
 # Store recent events for dashboard (thread-safe)
 EVENT_LOG = deque(maxlen=100)
 EVENT_LOCK = threading.Lock()
+
+# SQLite setup
+DB_PATH = 'events.db'
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        time TEXT,
+        type TEXT,
+        portal TEXT,
+        desc TEXT,
+        camera TEXT,
+        event TEXT,
+        count TEXT,
+        verdict TEXT
+    )''')
+    conn.commit()
+    conn.close()
+init_db()
 
 # Add mode selection and people counter for line crossing
 PEOPLE_COUNT = 0
@@ -39,10 +72,48 @@ def prune_unlocks():
 def log_event(event):
     with EVENT_LOCK:
         EVENT_LOG.appendleft(event)
+    # Insert into SQLite
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''INSERT INTO events (time, type, portal, desc, camera, event, count, verdict)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', (
+        event.get('time'),
+        event.get('type'),
+        event.get('portal', ''),
+        event.get('desc', ''),
+        event.get('camera', ''),
+        event.get('event', ''),
+        event.get('count', ''),
+        event.get('verdict', '')
+    ))
+    # Prune events older than 7 days
+    seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute('DELETE FROM events WHERE time < ?', (seven_days_ago,))
+    conn.commit()
+    conn.close()
 
 def get_events():
-    with EVENT_LOCK:
-        return list(EVENT_LOG)
+    # Fetch only events from the last 7 days, newest first
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d %H:%M:%S')
+    c.execute('''SELECT time, type, portal, desc, camera, event, count, verdict FROM events
+                 WHERE time >= ? ORDER BY time DESC LIMIT 100''', (seven_days_ago,))
+    rows = c.fetchall()
+    conn.close()
+    events = []
+    for row in rows:
+        events.append({
+            'time': row[0],
+            'type': row[1],
+            'portal': row[2],
+            'desc': row[3],
+            'camera': row[4],
+            'event': row[5],
+            'count': row[6],
+            'verdict': row[7]
+        })
+    return events
 
 @app.route('/camera', methods=['POST'])
 def camera():
