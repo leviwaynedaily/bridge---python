@@ -150,24 +150,24 @@
         .gauge-card {
             flex: 1 1 100px;
             min-width: 80px;
-            background: #000000;
-            border-radius: 8px;
-            padding: 6px 6px;
+            background: #181818;
+            border-radius: 10px;
+            padding: 8px 10px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            border: 2px solid #5CE1E6;
-            transition: border 0.2s, background 0.2s;
-            margin-bottom: 6px;
-            margin-left: 1px;
-            margin-right: 1px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+            border: none;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+            margin-left: 2px;
+            margin-right: 2px;
             box-sizing: border-box;
         }
         .gauge-card.people {
             cursor: default;
-            border: 2px solid #5CE1E6;
-            background: #000000;
+            border: none;
+            background: #181818;
         }
         .gauge-card.selectable {
             cursor: pointer;
@@ -177,7 +177,7 @@
             background: #101010;
         }
         .gauge-card.selected {
-            border: 2.5px solid #FF3333 !important;
+            border: 2.5px solid #5CE1E6 !important;
         }
         .gauge-label {
             font-size: 0.85em;
@@ -185,17 +185,66 @@
             margin-bottom: 2px;
             letter-spacing: 0.02em;
             text-align: left;
+            font-weight: 600;
         }
         .gauge-num {
             font-size: 2.2em;
             font-weight: bold;
             text-align: left;
+            color: #fff;
         }
         .gauge-card .gauge-num.red {
             color: #FF3333;
         }
         .gauge-card .gauge-num.white {
             color: #fff;
+        }
+        .gauge-desc {
+            font-size: 0.78em;
+            color: #B0B0B0;
+            margin-top: 2px;
+            margin-bottom: 2px;
+            font-weight: 400;
+            opacity: 1;
+            display: block;
+        }
+        .gauge-info-icon {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 12px;
+            height: 12px;
+            background: #444;
+            border-radius: 50%;
+            border: 1px solid #888;
+            color: #ccc;
+            font-size: 0.7em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+            padding-right: 2px;
+        }
+        .gauge-info-icon:hover {
+            background: #666;
+            color: #fff;
+            border: 1px solid #bbb;
+        }
+        .gauge-tooltip {
+            display: none;
+        }
+        .gauge-card.show-tooltip .gauge-tooltip {
+            display: block;
+        }
+        @media (min-width: 1101px) {
+            .gauge-info-icon, .gauge-tooltip { display: none !important; }
+        }
+        @media (max-width: 1100px) {
+            .gauge-desc { display: none; }
+            .gauge-info-icon { display: flex; }
         }
         @media (max-width: 700px) {
             .container { padding: 10px; overflow-x: hidden; height: 100%; }
@@ -228,12 +277,6 @@
                 height: 100%;
                 padding-left: 0;
                 padding-right: 0;
-            }
-        }
-        @media (max-width: 1100px) {
-            th.type-col, td.type-col,
-            th.count-col, td.count-col {
-                display: none !important;
             }
         }
         @media (max-width: 900px) {
@@ -317,6 +360,154 @@
             font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', Arial, sans-serif !important;
             color: #C7C7C7 !important;
             font-size: 1em !important;
+        }
+        /* Sidebar Modernization */
+        #sidebar, #sidebar label, #sidebar input, #sidebar button, #sidebar form, #sidebar span {
+            font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', Arial, sans-serif !important;
+            font-size: 0.93em !important;
+            color: #C7C7C7 !important;
+        }
+        #sidebar label {
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            margin-bottom: 4px;
+        }
+        #sidebar input[type="text"], #sidebar input[type="password"], #sidebar input[type="number"] {
+            background: #181818;
+            color: #5CE1E6;
+            border: 1px solid #5CE1E6;
+            border-radius: 4px;
+            padding: 3px 7px;
+            font-size: 0.93em;
+            margin-bottom: 8px;
+        }
+        #sidebar button {
+            background: #181818 !important;
+            color: #fff !important;
+            border: 2px solid #5CE1E6 !important;
+            border-radius: 18px !important;
+            padding: 6px 14px !important;
+            font-weight: 600;
+            font-size: 0.93em !important;
+            margin-bottom: 7px;
+            margin-right: 7px;
+            transition: background 0.2s, color 0.2s;
+            box-shadow: none;
+            outline: none;
+            cursor: pointer;
+        }
+        #sidebar button:hover, #sidebar button:focus {
+            background: #5CE1E6 !important;
+            color: #181818 !important;
+        }
+        #sidebar button:active {
+            background: #5CE1E6 !important;
+            color: #181818 !important;
+        }
+        /* Modern slider switch for Netbox enable */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+            margin-right: 12px;
+        }
+        .switch input { display: none; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #5CE1E6;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .switch-label {
+            font-size: 1em;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        .switch-status {
+            font-size: 1em;
+            font-weight: 600;
+            margin-left: 10px;
+            color: #5CE1E6;
+        }
+        /* Modal-style tooltip popup */
+        #center-tooltip-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #232323;
+            color: #B0B0B0;
+            font-size: 0.98em;
+            padding: 28px 36px;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.32);
+            max-width: 400px;
+            min-width: 220px;
+            z-index: 1001;
+            text-align: left;
+            line-height: 1.5;
+            pointer-events: auto;
+        }
+        #center-tooltip-modal.show {
+            display: block;
+        }
+        #center-tooltip-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 18px;
+            color: #aaa;
+            background: none;
+            border: 2px solid #5CE1E6;
+            border-radius: 5px;
+            font-size: 1.5em;
+            cursor: pointer;
+            z-index: 1002;
+            pointer-events: auto;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #center-tooltip-modal-close:hover {
+            background: #333;
+            color: #fff;
+            border-color: #fff;
+        }
+        #center-tooltip-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        #center-tooltip-overlay.show {
+            display: block;
         }
     </style>
     <script>
@@ -475,7 +666,43 @@
                 }
                 fetchEvents();
             };
+            // Modal close logic
+            document.getElementById('center-tooltip-modal-close').onclick = function(e) {
+                e.stopPropagation();
+                document.getElementById('center-tooltip-modal').classList.remove('show');
+                document.getElementById('center-tooltip-overlay').classList.remove('show');
+            };
+            document.getElementById('center-tooltip-overlay').onclick = function(e) {
+                if (e.target === this) {
+                    document.getElementById('center-tooltip-modal').classList.remove('show');
+                    document.getElementById('center-tooltip-overlay').classList.remove('show');
+                }
+            };
         };
+        function toggleGaugeTooltip(icon) {
+            const card = icon.closest('.gauge-card');
+            if (card.classList.contains('show-tooltip')) {
+                card.classList.remove('show-tooltip');
+            } else {
+                document.querySelectorAll('.gauge-card.show-tooltip').forEach(c => c.classList.remove('show-tooltip'));
+                card.classList.add('show-tooltip');
+            }
+        }
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('gauge-info-icon')) {
+                document.querySelectorAll('.gauge-card.show-tooltip').forEach(c => c.classList.remove('show-tooltip'));
+            }
+        });
+        function showCenterTooltipModal(event) {
+            if (event) event.stopPropagation();
+            var modal = document.getElementById('center-tooltip-modal');
+            var overlay = document.getElementById('center-tooltip-overlay');
+            var content = document.getElementById('center-tooltip-modal-content');
+            // Use the same tooltip text as before
+            content.innerHTML = "Tailgating is flagged if people detected (always 2+) exceeds valid unlocks in the set window. Unlocks are used up as matched. Rule can be changed in settings.";
+            modal.classList.add('show');
+            overlay.classList.add('show');
+        }
     </script>
 </head>
 <body>
@@ -500,13 +727,24 @@
                 <button id="window-save-sidebar">Save</button>
                 <span id="window-status-sidebar" style="margin-left:1em;"></span>
             </div>
+            <div id="tailgate-rule-bar-sidebar" style="margin-bottom: 1.5em; font-size: 1.2em;">
+                <label style="display:block; margin-bottom:8px;">Tailgating Rule:</label>
+                <select id="tailgate-rule-select-sidebar" style="width:100%; margin-bottom:8px;">
+                    <option value="gte">People must be less than or equal to unlocks (default)</option>
+                    <option value="gt">People must be less than unlocks</option>
+                </select>
+                <span style="font-size:0.95em; color:#aaa;">This controls how tailgating is detected. Default: people ≤ unlocks.</span>
+            </div>
             <div id="netbox-config-sidebar" style="margin-bottom: 1.5em; font-size: 1.2em;">
-                <div style="margin-bottom: 12px; display: flex; align-items: center;">
-                    <label for="netbox-enable-toggle" style="margin-right: 12px;">Enable Netbox</label>
-                    <input type="checkbox" id="netbox-enable-toggle" style="transform: scale(1.3);">
-                    <span id="netbox-enable-status" style="margin-left: 10px; color: #5CE1E6;"></span>
+                <div style="margin-bottom: 18px; display: flex; align-items: center;">
+                    <span class="switch-label">Netbox</span>
+                    <label class="switch">
+                        <input type="checkbox" id="netbox-enable-toggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="netbox-enable-status" class="switch-status"></span>
                 </div>
-                <form id="netbox-edit-form-sidebar" style="display:block;">
+                <form id="netbox-edit-form-sidebar" style="display:none;">
                     <label style="display:block; margin-bottom:8px;">NetBox URL:</label>
                     <input type="text" id="netbox-url-edit-sidebar" style="width:100%; margin-bottom:12px;">
                     <label style="display:block; margin-bottom:8px;">User:</label>
@@ -540,16 +778,25 @@
       <div class="container">
         <div class="gauges-sticky">
           <div id="gauges-row">
-            <div class="gauge-card people">
+            <div class="gauge-card people" data-desc="Number of people currently detected in the monitored area. Piko only triggers for 2 or more people crossing the line.">
+              <span class="gauge-info-icon" onclick="toggleGaugeTooltip(this)">i</span>
+              <span class="gauge-tooltip">Number of people currently detected in the monitored area. <b>Note:</b> Piko only triggers for 2 or more people crossing the line at once.</span>
               <span class="gauge-label">CURRENT PEOPLE COUNT</span>
+              <span class="gauge-desc">Number of people currently detected in the monitored area. Piko only triggers for 2+ people.</span>
               <span id="gauge-people-num" class="gauge-num">0</span>
             </div>
-            <div id="gauge-linecross" class="gauge-card selectable">
+            <div id="gauge-linecross" class="gauge-card selectable" data-desc="Total line crossing events detected by the camera.">
+              <span class="gauge-info-icon" onclick="toggleGaugeTooltip(this)">i</span>
+              <span class="gauge-tooltip">Total line crossing events detected by the camera.</span>
               <span class="gauge-label">LINE CROSSINGS</span>
+              <span class="gauge-desc">Total line crossing events detected by the camera.</span>
               <span id="gauge-linecross-num" class="gauge-num white">0</span>
             </div>
-            <div id="gauge-tailgate" class="gauge-card selectable">
+            <div id="gauge-tailgate" class="gauge-card selectable" data-desc="Number of tailgating violations (more people than valid access events).">
+              <span class="gauge-info-icon" onclick="showCenterTooltipModal(event)">i</span>
+              <span class="gauge-tooltip">Tailgating is flagged if people detected (always 2+) exceeds valid unlocks in the set window. Unlocks are used up as matched. Rule can be changed in settings.</span>
               <span class="gauge-label">TAILGATING HISTORY</span>
+              <span class="gauge-desc">Number of tailgating violations (more people than valid access events).</span>
               <span id="gauge-tailgate-num" class="gauge-num red">0</span>
             </div>
           </div>
@@ -570,6 +817,12 @@
         </div>
       </div>
     </div>
+    <!-- Modal tooltip for center screen -->
+    <div id="center-tooltip-overlay"></div>
+    <div id="center-tooltip-modal">
+        <button id="center-tooltip-modal-close" title="Close">&times;</button>
+        <div id="center-tooltip-modal-content"></div>
+    </div>
     <script>
         // Sidebar logic
         function openSidebar() {
@@ -583,10 +836,11 @@
             fetch('/get_netbox_config').then(r => r.json()).then(cfg => {
                 document.getElementById('netbox-url-edit-sidebar').value = cfg.url;
                 document.getElementById('netbox-user-edit-sidebar').value = cfg.username;
-                document.getElementById('netbox-pass-edit-sidebar').value = '';
+                document.getElementById('netbox-pass-edit-sidebar').value = (cfg.password && cfg.password.length > 0) ? '*******' : '';
                 document.getElementById('netbox-test-status-sidebar').textContent = '';
                 document.getElementById('netbox-enable-toggle').checked = !!cfg.enabled;
                 document.getElementById('netbox-enable-status').textContent = cfg.enabled ? 'Enabled' : 'Disabled';
+                document.getElementById('netbox-edit-form-sidebar').style.display = cfg.enabled ? 'block' : 'none';
             });
         }
         function closeSidebar() {
@@ -656,6 +910,7 @@
         document.getElementById('netbox-enable-toggle').onchange = function() {
             let enabled = this.checked;
             document.getElementById('netbox-enable-status').textContent = enabled ? 'Enabled' : 'Disabled';
+            document.getElementById('netbox-edit-form-sidebar').style.display = enabled ? 'block' : 'none';
         };
         // Sidebar test buttons
         function showTestStatusSidebar(msg, color) {

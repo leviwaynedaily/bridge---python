@@ -9,6 +9,7 @@ from collections import deque
 import os
 import sys
 import sqlite3
+import json
 
 # --- Auto-install required packages if missing ---
 REQUIRED = ['flask', 'requests', 'jinja2']
@@ -58,12 +59,30 @@ PEOPLE_LOCK = threading.Lock()
 default_url = 'http://10.13.1.180/nbws/goforms/nbapi'
 default_user = 'admin'
 default_pass = 'Csg5841!#'
-app.config['NETBOX_CONFIG'] = {
-    'url': default_url,
-    'username': default_user,
-    'password': default_pass,
-    'enabled': False
-}
+NETBOX_CONFIG_PATH = 'netbox_config.json'
+
+def save_netbox_config(cfg):
+    with open(NETBOX_CONFIG_PATH, 'w') as f:
+        json.dump(cfg, f)
+
+def load_netbox_config():
+    try:
+        with open(NETBOX_CONFIG_PATH, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+# Load Netbox config from file if it exists
+loaded_cfg = load_netbox_config()
+if loaded_cfg:
+    app.config['NETBOX_CONFIG'] = loaded_cfg
+else:
+    app.config['NETBOX_CONFIG'] = {
+        'url': default_url,
+        'username': default_user,
+        'password': default_pass,
+        'enabled': False
+    }
 
 def prune_unlocks():
     cutoff = datetime.now(timezone.utc) - timedelta(seconds=WINDOW)
@@ -161,8 +180,8 @@ def camera():
                 UNLOCK_EVENTS.remove(oldest)
                 recent_unlocks.remove(oldest)
         else:
-            verdict = 'TAILGATE'
-            print(f"[DEBUG] Verdict: TAILGATE. Not enough unlocks.")
+            verdict = 'TAILGATING'
+            print(f"[DEBUG] Verdict: TAILGATING. Not enough unlocks.")
         response['classification'] = verdict
         # Update the most recent camera event in the log with the correct verdict
         with EVENT_LOCK:
@@ -269,14 +288,15 @@ def set_netbox_config():
     username = data.get('username', default_user)
     password = data.get('password', default_pass)
     enabled = data.get('enabled', False)
-    app.config['NETBOX_CONFIG'] = {'url': url, 'username': username, 'password': password, 'enabled': enabled}
+    cfg = {'url': url, 'username': username, 'password': password, 'enabled': enabled}
+    app.config['NETBOX_CONFIG'] = cfg
+    save_netbox_config(cfg)
     print(f"[DEBUG] Netbox config updated. Enabled: {enabled}")
     if enabled:
         print("[DEBUG] Netbox integration enabled. Starting Netbox thread...")
         start_netbox_thread()
     else:
         print("[DEBUG] Netbox integration disabled. (Stopping not implemented)")
-    # Optionally restart NetBox thread here if needed
     return jsonify(status='ok', config=get_netbox_config(mask=True))
 
 @app.route('/test_netbox', methods=['POST'])
