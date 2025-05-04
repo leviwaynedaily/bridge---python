@@ -61,7 +61,8 @@ default_pass = 'Csg5841!#'
 app.config['NETBOX_CONFIG'] = {
     'url': default_url,
     'username': default_user,
-    'password': default_pass
+    'password': default_pass,
+    'enabled': False
 }
 
 def prune_unlocks():
@@ -252,7 +253,8 @@ def get_netbox_config(mask=True):
         return {
             'url': cfg.get('url', ''),
             'username': cfg.get('username', ''),
-            'password': '*' * len(cfg.get('password', '')) if cfg.get('password') else ''
+            'password': '*' * len(cfg.get('password', '')) if cfg.get('password') else '',
+            'enabled': cfg.get('enabled', False)
         }
     return cfg
 
@@ -266,7 +268,14 @@ def set_netbox_config():
     url = data.get('url', default_url)
     username = data.get('username', default_user)
     password = data.get('password', default_pass)
-    app.config['NETBOX_CONFIG'] = {'url': url, 'username': username, 'password': password}
+    enabled = data.get('enabled', False)
+    app.config['NETBOX_CONFIG'] = {'url': url, 'username': username, 'password': password, 'enabled': enabled}
+    print(f"[DEBUG] Netbox config updated. Enabled: {enabled}")
+    if enabled:
+        print("[DEBUG] Netbox integration enabled. Starting Netbox thread...")
+        start_netbox_thread()
+    else:
+        print("[DEBUG] Netbox integration disabled. (Stopping not implemented)")
     # Optionally restart NetBox thread here if needed
     return jsonify(status='ok', config=get_netbox_config(mask=True))
 
@@ -301,6 +310,10 @@ def test_netbox():
 def start_netbox_thread():
     if hasattr(app, 'netbox_thread') and app.netbox_thread and app.netbox_thread.is_alive():
         return  # Already running
+    cfg = app.config.get('NETBOX_CONFIG', {})
+    if not cfg.get('enabled', False):
+        print("[DEBUG] Netbox thread not started because integration is disabled.")
+        return
     def netbox_wrapper():
         config = app.config.get('NETBOX_CONFIG', {})
         url = config.get('url', default_url)
@@ -317,15 +330,16 @@ def start_netbox_thread():
   </COMMAND>
 </NETBOX-API>
 """
-        r = requests.post(url, data=login_payload, headers={'Content-Type': 'application/xml'})
-        print("Login response:", r.text)
-        root = ET.fromstring(r.text)
-        session = root.attrib.get('sessionid', None)
-        if not session:
-            print("No sessionid found in NetBox login response.")
-            return
-        print("Subscribing to event stream...")
-        stream_payload = f"""
+        try:
+            r = requests.post(url, data=login_payload, headers={'Content-Type': 'application/xml'})
+            print("Login response:", r.text)
+            root = ET.fromstring(r.text)
+            session = root.attrib.get('sessionid', None)
+            if not session:
+                print("No sessionid found in NetBox login response.")
+                return
+            print("Subscribing to event stream...")
+            stream_payload = f"""
 <NETBOX-API sessionid=\"{session}\">
   <COMMAND name="StreamEvents">
     <PARAMS>
@@ -336,32 +350,34 @@ def start_netbox_thread():
   </COMMAND>
 </NETBOX-API>
 """
-        with requests.post(url, data=stream_payload, headers={'Content-Type': 'application/xml'}, stream=True) as resp:
-            print("Event stream started, waiting for events...")
-            for line in resp.iter_lines():
-                if not line:
-                    continue
-                txt = line.decode(errors='ignore')
-                print("Received line:", txt)
-                if '<EVENT' not in txt:
-                    continue
-                # parse minimal XML
-                xml = txt.split('--Boundary')[0]
-                evt = ET.fromstring(xml).find('.//EVENT')
-                desc = evt.find('DESCNAME').text or ''
-                portal = evt.find('PORTALNAME').text or ''
-                now_local = datetime.now().astimezone()
-                now_utc   = now_local.astimezone(timezone.utc)
-                print(f"[{now_local:%H:%M:%S %Z}] ACCESS: {portal} → {desc}")
-                log_event({
-                    'type': 'access',
-                    'time': now_local.isoformat(),
-                    'portal': portal,
-                    'desc': desc
-                })
-                if 'unlock' in desc.lower():
-                    UNLOCK_EVENTS.append(now_utc)
-                    prune_unlocks()
+            with requests.post(url, data=stream_payload, headers={'Content-Type': 'application/xml'}, stream=True) as resp:
+                print("Event stream started, waiting for events...")
+                for line in resp.iter_lines():
+                    if not line:
+                        continue
+                    txt = line.decode(errors='ignore')
+                    print("Received line:", txt)
+                    if '<EVENT' not in txt:
+                        continue
+                    # parse minimal XML
+                    xml = txt.split('--Boundary')[0]
+                    evt = ET.fromstring(xml).find('.//EVENT')
+                    desc = evt.find('DESCNAME').text or ''
+                    portal = evt.find('PORTALNAME').text or ''
+                    now_local = datetime.now().astimezone()
+                    now_utc   = now_local.astimezone(timezone.utc)
+                    print(f"[{now_local:%H:%M:%S %Z}] ACCESS: {portal} → {desc}")
+                    log_event({
+                        'type': 'access',
+                        'time': now_local.isoformat(),
+                        'portal': portal,
+                        'desc': desc
+                    })
+                    if 'unlock' in desc.lower():
+                        UNLOCK_EVENTS.append(now_utc)
+                        prune_unlocks()
+        except Exception as ex:
+            print(f"[DEBUG] Netbox thread error: {ex}")
     app.netbox_thread = threading.Thread(target=netbox_wrapper, daemon=True)
     app.netbox_thread.start()
 
