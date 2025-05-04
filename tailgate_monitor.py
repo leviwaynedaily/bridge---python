@@ -145,20 +145,35 @@ def camera():
     if event_type == 'tailgating':
         count = int(data.get('EventCaption', '2').split()[0] or 2)
         prune_unlocks()
-        recent_unlocks = [
-            t for t in UNLOCK_EVENTS
-            if 0 <= (now_utc - t).total_seconds() <= WINDOW
-        ]
+        # Find recent unlocks within the window
+        recent_unlocks = [t for t in UNLOCK_EVENTS if 0 <= (now_utc - t).total_seconds() <= WINDOW]
+        print(f"[DEBUG] Processing tailgating event at {now_utc}. Needed count: {count}")
+        print(f"[DEBUG] UNLOCK_EVENTS: {[t.isoformat() for t in UNLOCK_EVENTS]}")
+        print(f"[DEBUG] recent_unlocks: {[t.isoformat() for t in recent_unlocks]}")
         if len(recent_unlocks) >= count:
             verdict = 'NO TAILGATE'
+            print(f"[DEBUG] Verdict: NO TAILGATE. Consuming {count} unlocks.")
+            # Consume (remove) the matched unlocks so they can't be reused
+            for _ in range(count):
+                # Remove the oldest unlock in the window
+                oldest = min(recent_unlocks)
+                UNLOCK_EVENTS.remove(oldest)
+                recent_unlocks.remove(oldest)
         else:
             verdict = 'TAILGATE'
+            print(f"[DEBUG] Verdict: TAILGATE. Not enough unlocks.")
         response['classification'] = verdict
         # Update the most recent camera event in the log with the correct verdict
         with EVENT_LOCK:
             for event in EVENT_LOG:
                 if event.get('type') == 'camera' and event.get('time') == now_local.isoformat() and event.get('event') == data.get('EventName', '<unnamed>'):
                     event['verdict'] = verdict
+                    # Also update the verdict in the database
+                    conn = sqlite3.connect(DB_PATH)
+                    c = conn.cursor()
+                    c.execute('''UPDATE events SET verdict = ? WHERE time = ? AND event = ? AND type = 'camera' ''', (verdict, now_local.isoformat(), data.get('EventName', '<unnamed>')))
+                    conn.commit()
+                    conn.close()
                     break
     return jsonify(response)
 
@@ -197,6 +212,7 @@ def test_access():
         now_utc = now_local.astimezone(timezone.utc)
         UNLOCK_EVENTS.append(now_utc)
         prune_unlocks()
+        print(f"[DEBUG] Added unlock at {now_utc}. UNLOCK_EVENTS now: {[t.isoformat() for t in UNLOCK_EVENTS]}")
         # Decrement people count for unlock (allow negative)
         with PEOPLE_LOCK:
             PEOPLE_COUNT -= 1
@@ -363,6 +379,17 @@ def restart():
         os._exit(0)
     threading.Timer(0.5, do_exit).start()
     return jsonify(status='ok', message='Server restarting...')
+
+@app.route('/clear_db', methods=['POST'])
+def clear_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM events')
+    conn.commit()
+    conn.close()
+    with EVENT_LOCK:
+        EVENT_LOG.clear()
+    return jsonify(status='ok', message='Database cleared.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tailgate Monitor')

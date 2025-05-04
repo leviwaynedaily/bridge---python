@@ -15,8 +15,8 @@
         body {
             min-height: 100vh;
             background: #000000;
-            color: #E0E0E0;
-            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
+            color: #FFFFFF;
+            font-family: 'Montserrat', 'Open Sans', Arial, sans-serif;
             margin: 0;
             padding: 0;
         }
@@ -35,7 +35,7 @@
             border-radius: 0;
             box-shadow: none;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             min-height: 0;
             flex: 1 1 auto;
             height: 100%;
@@ -71,10 +71,10 @@
             border-radius: 0;
         }
         th, td {
-            padding: 2px 3px;
+            padding: 3px 4px;
             text-align: left;
-            font-size: 0.75em;
-            max-width: 110px;
+            font-size: 1em;
+            max-width: 120px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -98,7 +98,6 @@
             top: 0;
             z-index: 10;
             text-align: left;
-            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
         }
         tr {
             border-bottom: 1px solid #333;
@@ -110,20 +109,18 @@
             background: #111;
         }
         td {
-            color: #E0E0E0;
+            color: #FFFFFF;
             font-size: 0.95em;
-            font-family: 'Segoe UI', 'Roboto', 'Open Sans', Arial, sans-serif;
         }
-        .tailgate {
-            color: #FF3333;
-            font-weight: bold;
+        td.tailgate {
+            color: #FF3333 !important;
+            font-weight: bold !important;
             background: #000000;
             border-radius: 4px;
-            padding: 2px 6px;
-            cursor: help;
+            padding: 4px 8px;
         }
-        .no-tailgate {
-            color: #5CE1E6;
+        td.no-tailgate {
+            color: #00FF66 !important;
             font-weight: bold;
             background: #000000;
             border-radius: 4px;
@@ -159,10 +156,9 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            border: 2px solid #232323;
-            transition: border 0.2s;
+            border: 2px solid #5CE1E6;
+            transition: border 0.2s, background 0.2s;
             margin-bottom: 6px;
             margin-left: 1px;
             margin-right: 1px;
@@ -171,12 +167,17 @@
         .gauge-card.people {
             cursor: default;
             border: 2px solid #5CE1E6;
+            background: #000000;
         }
-        .gauge-card.people .gauge-label {
-            color: #5CE1E6;
+        .gauge-card.selectable {
+            cursor: pointer;
         }
-        .gauge-card.people .gauge-num {
-            color: #fff;
+        .gauge-card.selectable:hover {
+            border: 2.5px solid #fff;
+            background: #101010;
+        }
+        .gauge-card.selected {
+            border: 2.5px solid #FF3333 !important;
         }
         .gauge-label {
             font-size: 0.85em;
@@ -227,6 +228,24 @@
                 height: 100%;
                 padding-left: 0;
                 padding-right: 0;
+            }
+        }
+        @media (max-width: 1100px) {
+            th.type-col, td.type-col,
+            th.count-col, td.count-col {
+                display: none !important;
+            }
+        }
+        @media (max-width: 900px) {
+            th.time-col, td.time-col {
+                min-width: 70px;
+                max-width: 90px;
+            }
+            th, td, .event-log {
+                font-size: 0.92em !important;
+            }
+            th.source-col, td.source-col {
+                display: none !important;
             }
         }
         /* Settings Modal Customizations */
@@ -294,6 +313,11 @@
         #settings-modal #test-status-modal {
             color: #5CE1E6 !important;
         }
+        .event-log, table, th, td {
+            font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', Arial, sans-serif !important;
+            color: #C7C7C7 !important;
+            font-size: 1em !important;
+        }
     </style>
     <script>
         let eventFilter = null; // 'linecross' | 'tailgate' | null
@@ -302,7 +326,7 @@
             let tailgateCount = 0;
             for (let e of events) {
                 if (e.type === 'camera' && e.event && e.event.toLowerCase().includes('linecross')) lineCrossCount++;
-                if (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') tailgateCount++;
+                if (e.verdict && (e.verdict.toUpperCase() === 'TAILGATING' || e.verdict.toUpperCase() === 'TAILGATE')) tailgateCount++;
             }
             document.getElementById('gauge-linecross-num').textContent = lineCrossCount;
             document.getElementById('gauge-tailgate-num').textContent = tailgateCount;
@@ -377,7 +401,21 @@
                 }
                 for (let e of filtered) {
                     let row = document.createElement('tr');
-                    let timeCell = formatDateLabel(e.time);
+                    let timeCellFull = formatDateLabel(e.time);
+                    // Responsive: show only time for today on medium/small screens
+                    let isToday = false;
+                    let dt = new Date(e.time);
+                    let now = new Date();
+                    if (!isNaN(dt.getTime())) {
+                        let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        let eventDay = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+                        isToday = (today.getTime() === eventDay.getTime());
+                    }
+                    let timeOnly = dt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+                    let timeCell = timeCellFull;
+                    if (window.innerWidth <= 1100 && isToday) {
+                        timeCell = timeOnly;
+                    }
                     // Clean up count: extract leading number
                     let countVal = '';
                     if (e.count) {
@@ -386,13 +424,24 @@
                     }
                     // Clean up event: add space in 'TailgateDetected'
                     let eventVal = e.event ? e.event.replace(/([a-z])([A-Z])/g, '$1 $2') : '';
-                    let countCell = countVal ? `${countVal} <span style='font-size:1em;' title='Person'>👤</span>` : '';
+                    // Debug: log the verdict value
+                    console.log('Verdict value:', e.verdict);
+                    let verdictClass = (e.verdict && (e.verdict.toUpperCase() === 'TAILGATING' || e.verdict.toUpperCase() === 'TAILGATE')) ? 'tailgate' : (e.verdict && e.verdict.toUpperCase() === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
+                    let verdictContent = e.verdict;
+                    if (e.verdict && (e.verdict.toUpperCase() === 'TAILGATING' || e.verdict.toUpperCase() === 'TAILGATE')) {
+                        verdictContent = `<span style=\"color:#FF3333;font-weight:bold;\">${e.verdict}</span>`;
+                    } else if (e.verdict && e.verdict.toUpperCase() === 'NO TAILGATE') {
+                        verdictContent = `<span style=\"color:#00FF66;font-weight:bold;\">${e.verdict}</span>`;
+                    }
                     if (e.type === 'access') {
-                        row.innerHTML = `<td>${timeCell}</td><td>Access</td><td class='device-col' title='${e.portal}'>${e.portal}</td><td class='event-col' title='${e.desc}'>${e.desc}</td><td class='count-col'></td><td></td><td></td>`;
+                        let source = 'Netbox';
+                        let eventDesc = (e.desc && e.desc.toLowerCase().includes('unlock')) ? 'Door Unlocked' : (e.desc && e.desc.toLowerCase().includes('lock')) ? 'Door Locked' : e.desc;
+                        row.innerHTML = `<td class='time-col'>${timeCell}</td><td class='type-col'>Access</td><td class='device-col' title='Test Door'>Test Door</td><td class='source-col'>${source}</td><td class='event-col' title='${eventDesc}'>${eventDesc}</td><td class='count-col'></td><td></td><td></td>`;
                     } else {
-                        let verdictClass = (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : (e.verdict === 'IGNORED' ? 'ignored' : ''));
-                        let verdictCell = (e.verdict && e.verdict.toUpperCase() === 'TAILGATING') ? `<td class='${verdictClass}' title='Multiple people entered on a single access event'>${e.verdict}</td>` : `<td class='${verdictClass}'>${e.verdict}</td>`;
-                        row.innerHTML = `<td>${timeCell}</td><td>Camera</td><td class='device-col' title='${e.camera}'>${e.camera}</td><td class='event-col' title='${eventVal}'>${eventVal}</td><td class='count-col'>${countCell}</td>${verdictCell}<td></td>`;
+                        let source = (e.camera && e.camera === 'TestCam') ? 'Piko' : 'Simulator';
+                        let eventName = (eventVal && eventVal === 'Tailgate Detected') ? 'Tailgating Analytic' : eventVal;
+                        let cameraName = (e.camera && e.camera === 'TestCam') ? 'Test Camera' : e.camera;
+                        row.innerHTML = `<td class='time-col'>${timeCell}</td><td class='type-col'>Camera</td><td class='device-col' title='${cameraName}'>${cameraName}</td><td class='source-col'>${source}</td><td class='event-col' title='${eventName}'>${eventName}</td><td class='count-col'>${countVal}</td><td class='${verdictClass}'>${verdictContent}</td><td></td>`;
                     }
                     tbody.appendChild(row);
                 }
@@ -407,22 +456,22 @@
             document.getElementById('gauge-linecross').onclick = function() {
                 if (eventFilter === 'linecross') {
                     eventFilter = null;
-                    this.style.border = '2px solid #232323';
+                    this.classList.remove('selected');
                 } else {
                     eventFilter = 'linecross';
-                    this.style.border = '2px solid #5CE1E6';
-                    document.getElementById('gauge-tailgate').style.border = '2px solid #232323';
+                    this.classList.add('selected');
+                    document.getElementById('gauge-tailgate').classList.remove('selected');
                 }
                 fetchEvents();
             };
             document.getElementById('gauge-tailgate').onclick = function() {
                 if (eventFilter === 'tailgate') {
                     eventFilter = null;
-                    this.style.border = '2px solid #232323';
+                    this.classList.remove('selected');
                 } else {
                     eventFilter = 'tailgate';
-                    this.style.border = '2px solid #FF3333';
-                    document.getElementById('gauge-linecross').style.border = '2px solid #232323';
+                    this.classList.add('selected');
+                    document.getElementById('gauge-linecross').classList.remove('selected');
                 }
                 fetchEvents();
             };
@@ -477,26 +526,24 @@
             <div id="restart-bar-sidebar" style="margin-top:32px; display:flex; flex-direction:column; align-items:center;">
                 <button id="restart-server-btn-sidebar" style="border:2px solid #5CE1E6; color:#5CE1E6; background:transparent; font-family:'Montserrat','Open Sans',Arial,sans-serif; font-size:1.1em; font-weight:bold; border-radius:4px; padding:10px 24px; margin-top:12px; width:90%; transition:background 0.2s, color 0.2s;">Restart Server</button>
                 <span id="restart-status-sidebar" style="margin-top:8px; color:#5CE1E6;"></span>
+                <button id="clear-db-btn-sidebar" style="border:2px solid #FF3333; color:#FF3333; background:transparent; font-family:'Montserrat','Open Sans',Arial,sans-serif; font-size:1.1em; font-weight:bold; border-radius:4px; padding:10px 24px; margin-top:16px; width:90%; transition:background 0.2s, color 0.2s;">Clear Database</button>
+                <span id="clear-db-status-sidebar" style="margin-top:8px; color:#FF3333;"></span>
             </div>
         </div>
     </div>
     <div id="main-content">
       <div class="container">
-        <div style="flex: 1 1 60%; max-width: 60%; border-right: 1.5px solid #222; margin-right: 18px;">
-          <!-- Video or main content goes here -->
-        </div>
-        <div style="flex: 0 0 40%; max-width: 40%; min-width: 320px; display: flex; flex-direction: column;">
         <div class="gauges-sticky">
           <div id="gauges-row">
             <div class="gauge-card people">
-              <span class="gauge-label">CURRENT PEOPLE</span>
+              <span class="gauge-label">CURRENT PEOPLE COUNT</span>
               <span id="gauge-people-num" class="gauge-num">0</span>
             </div>
-            <div id="gauge-linecross" class="gauge-card">
+            <div id="gauge-linecross" class="gauge-card selectable">
               <span class="gauge-label">LINE CROSSINGS</span>
               <span id="gauge-linecross-num" class="gauge-num white">0</span>
             </div>
-            <div id="gauge-tailgate" class="gauge-card">
+            <div id="gauge-tailgate" class="gauge-card selectable">
               <span class="gauge-label">TAILGATING HISTORY</span>
               <span id="gauge-tailgate-num" class="gauge-num red">0</span>
             </div>
@@ -509,13 +556,12 @@
           <table>
             <thead>
               <tr>
-                <th>Time</th><th>Type</th><th>Device</th><th>Event</th><th>Count</th><th>Verdict</th><th></th>
+                <th class="time-col">Time</th><th class="type-col">Type</th><th>Name</th><th class="source-col">Source</th><th>Event</th><th class="count-col">Count</th><th>Verdict</th><th></th>
               </tr>
             </thead>
             <tbody id="event-tbody">
             </tbody>
           </table>
-        </div>
         </div>
       </div>
     </div>
@@ -655,6 +701,21 @@
                 })
                 .catch(() => {
                     document.getElementById('restart-status-sidebar').textContent = 'Error';
+                });
+        };
+        // Sidebar clear database
+        document.getElementById('clear-db-btn-sidebar').onclick = function() {
+            if (!confirm('Are you sure you want to clear ALL events?')) return;
+            document.getElementById('clear-db-status-sidebar').textContent = 'Clearing...';
+            fetch('/clear_db', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('clear-db-status-sidebar').textContent = data.status === 'ok' ? 'Database cleared!' : (data.message || 'Error');
+                    setTimeout(() => document.getElementById('clear-db-status-sidebar').textContent = '', 2000);
+                    fetchEvents();
+                })
+                .catch(() => {
+                    document.getElementById('clear-db-status-sidebar').textContent = 'Error';
                 });
         };
     </script>
