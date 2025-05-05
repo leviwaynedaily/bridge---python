@@ -1,0 +1,3 @@
+([('tailgate_monitor',
+   '/Users/levidaily/Desktop/bridge - python/dist/tailgate_monitor',
+   'EXECUTABLE')],)

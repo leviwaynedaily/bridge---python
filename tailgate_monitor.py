@@ -10,6 +10,9 @@ import os
 import sys
 import sqlite3
 import json
+import webbrowser
+import pystray
+from PIL import Image, ImageDraw
 
 # --- Auto-install required packages if missing ---
 REQUIRED = ['flask', 'requests', 'jinja2']
@@ -428,81 +431,39 @@ def clear_db():
     return jsonify(status='ok', message='Database cleared.')
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Tailgate Monitor')
-    parser.add_argument('--dashboard', action='store_true', help='Enable dashboard UI')
-    parser.add_argument('--host', default='0.0.0.0', help='Flask host')
-    parser.add_argument('--port', type=int, default=8080, help='Flask port')
-    parser.add_argument('--mode', choices=['tailgating', 'linecrossing'], default='tailgating', help='Operation mode: tailgating or linecrossing')
-    parser.add_argument('--netbox_url', default='http://10.13.1.180/nbws/goforms/nbapi', help='NetBox API URL')
-    parser.add_argument('--netbox_user', default='admin', help='NetBox username')
-    parser.add_argument('--netbox_pass', default='Csg5841!#', help='NetBox password')
-    args = parser.parse_args()
+    import threading
+    import webbrowser
+    import pystray
+    from PIL import Image, ImageDraw
+    
+    def run_flask():
+        # Use 127.0.0.1 to avoid firewall popups on Windows
+        app.run(host='127.0.0.1', port=5000, debug=False)
 
-    app.config['MODE'] = args.mode
-    app.config['NETBOX_CONFIG'] = {'url': args.netbox_url, 'username': args.netbox_user, 'password': args.netbox_pass}
+    def create_image():
+        # Simple blue circle icon
+        image = Image.new('RGB', (64, 64), color=(92, 225, 230))
+        d = ImageDraw.Draw(image)
+        d.ellipse((8, 8, 56, 56), fill=(0, 0, 0))
+        return image
 
-    if args.mode == 'prod':
-        start_netbox_thread()
+    def on_open(icon, item):
+        webbrowser.open('http://127.0.0.1:5000')
 
-    if args.dashboard:
-        # Ensure templates folder exists
-        if not os.path.exists('templates'):
-            os.makedirs('templates')
-        # Write a simple dashboard template if not present
-        dashboard_path = os.path.join('templates', 'dashboard.html')
-        if not os.path.exists(dashboard_path):
-            with open(dashboard_path, 'w') as f:
-                f.write('''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Tailgate Monitor Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; }
-        h1 { color: #333; }
-        .tailgate { color: red; font-weight: bold; }
-        .no-tailgate { color: green; font-weight: bold; }
-        .event-log { margin-top: 2em; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        th { background: #eee; }
-    </style>
-    <script>
-        function fetchEvents() {
-            fetch('/events').then(r => r.json()).then(events => {
-                let tbody = document.getElementById('event-tbody');
-                tbody.innerHTML = '';
-                for (let e of events) {
-                    let row = document.createElement('tr');
-                    if (e.type === 'access') {
-                        row.innerHTML = `<td>${e.time}</td><td>Access</td><td>${e.portal}</td><td>${e.desc}</td><td></td><td></td><td></td>`;
-                    } else {
-                        let verdictClass = e.verdict === 'TAILGATE' ? 'tailgate' : (e.verdict === 'NO TAILGATE' ? 'no-tailgate' : '');
-                        row.innerHTML = `<td>${e.time}</td><td>Camera</td><td>${e.camera}</td><td>${e.event}</td><td>${e.count}</td><td class='${verdictClass}'>${e.verdict}</td><td></td>`;
-                    }
-                    tbody.appendChild(row);
-                }
-            });
-        }
-        setInterval(fetchEvents, 2000);
-        window.onload = fetchEvents;
-    </script>
-</head>
-<body>
-    <h1>Tailgate Monitor Dashboard</h1>
-    <div class="event-log">
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th><th>Type</th><th>Portal/Camera</th><th>Event</th><th>Count</th><th>Verdict</th><th></th>
-                </tr>
-            </thead>
-            <tbody id="event-tbody">
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>''')
-        app.run(host=args.host, port=args.port)
-    else:
-        app.run(host=args.host, port=args.port) 
+    def on_quit(icon, item):
+        icon.stop()
+        os._exit(0)
+
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    icon = pystray.Icon(
+        "TailgateMonitor",
+        create_image(),
+        "Tailgating Monitor",
+        menu=pystray.Menu(
+            pystray.MenuItem("Open Dashboard", on_open),
+            pystray.MenuItem("Quit", on_quit)
+        )
+    )
+    icon.run() 
